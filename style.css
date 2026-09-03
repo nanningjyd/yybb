@@ -221,11 +221,28 @@ output { color: var(--brand); font-weight: 600; }
   line-height: 1.7;
 }
 
+.notice.fail {
+  background: #fdecea;
+  border-color: #f5b7b1;
+  color: #9d261d;
+}
+
+.notice.warn {
+  background: #fff7e6;
+  border-color: #f0d9a8;
+  color: #7a5b12;
+}
+
 @media (prefers-color-scheme: dark) {
   .notice {
     background: #2b2413;
     border-color: #4d3f1c;
     color: #e6c56a;
+  }
+  .notice.fail {
+    background: #3a1a18;
+    border-color: #5c2620;
+    color: #f0a098;
   }
 }
 

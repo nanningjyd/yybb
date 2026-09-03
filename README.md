@@ -28,11 +28,21 @@ git clone https://github.com/nanningjyd/yybb.git
 
 | 环境 | 推荐做法 |
 | --- | --- |
-| Windows | 用 **Edge 浏览器**打开，自带“晓晓 / 晓伊”等高质量中文在线音色 |
+| Windows | 用 **Edge 浏览器**打开，自带“云希（男声）/ 晓晓（女声）”等高质量在线音色 |
 | macOS / iOS | Safari 或 Chrome，内置“婷婷”等中文音色 |
 | Android | Chrome / Edge，音色随系统 TTS 引擎（如讯飞）而定 |
 
+**重要**：微信/QQ/钉钉内置浏览器、部分 WebView 内核会忽略 `utterance.voice` 设置，导致所有中文音色听起来是同一女声。如果你遇到这个问题，请切换到 Edge 或 Chrome 桌面版打开本页。也可点工具栏上的「🧪 诊断音色」按钮，连续播放两段不同音色的测试文本，自己听一下是否真的不同。
+
 首次打开页面时，音色列表可能延迟几秒加载，点“↻ 刷新音色”即可。
+
+## 与源站方案的对比
+
+本项目的灵感来自 http://www.gxezb.com:5001/tools/ （评标语音播报）。逆向分析源站发现：
+
+- 源站的 7 种真实不同音色，是**通过腾讯云 basic TTS（TextToVoice）后端 API** 生成的（客户端 `POST {Text, VoiceType}` → 服务端返回 base64 MP3 音频 → `<audio>` 播放），并不是浏览器 speechSynthesis
+- yybb 走**纯前端 speechSynthesis** 路线，无需后端、无需登录、完全免费、不上传任何文本到第三方，代价是音色质量与"是否真能区分"取决于用户的浏览器内核
+- 对"必须区分 7 种以上真实音色"的场景，推荐使用 [edge-tts](https://github.com/rhasspy/edge-tts)（开源、免费、支持 200+ 真实音色）自建后端，思路与源站一致
 
 ## 技术实现
 
@@ -40,6 +50,18 @@ git clone https://github.com/nanningjyd/yybb.git
 - 使用 [Web Speech API](https://developer.mozilla.org/docs/Web/API/SpeechSynthesis)（`speechSynthesis` + `SpeechSynthesisUtterance`）
 - 长文本按 `。！？；` 等标点切分成短句，逐句合成、串联播放；单句超过 110 字再按逗号细分，规避部分浏览器对超长朗读文本静默截断的问题
 - 通过 `utterance.onend` 事件串联队列，实现断点续读与逐句高亮
+- 智能默认发音人：Edge 默认推荐“云希（男声）”（与系统默认慧慧女声对比最明显），其他浏览器默认“瑶瑶”
+- 音色诊断工具：播放两段不同音色的测试文本，辅助用户确认当前浏览器是否支持区分音色
+
+## 更新日志
+
+- **v1.7** 新增「🧪 诊断音色」按钮 + 智能默认发音人推荐（Edge → 云希男声）+ 强化浏览器限制提示
+- **v1.6** 修复"开始播报"后试听按钮未重置
+- **v1.5** 新增"忽略发音人选择"的浏览器限制提示
+- **v1.4** 试听按钮支持暂停/继续
+- **v1.3** 默认音色改为瑶瑶（女声）
+- **v1.2** 修复下拉框排序后与 getVoice 不一致
+- **v1.1** 音色名称中文化显示
 
 ## License
 

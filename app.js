@@ -1,5 +1,6 @@
 /* yybb - 网页语音播报
  * 纯浏览器本地合成（Web Speech API），无需登录、无需后端。
+ * v1.7 新增：音色诊断、智能默认音色推荐、强化 voice 选择兼容性
  */
 (function () {
   "use strict";
@@ -127,7 +128,7 @@
       opt.textContent = voiceLabel(v);
       sel.appendChild(opt);
     });
-    // 恢复用户上次选的音色（按名称）；没有历史选择时，默认选中“瑶瑶（女声）”，其次第一个中文音色
+    // 恢复用户上次选的音色（按名称）；没有历史选择时，用智能默认
     var restored = "";
     if (lastVoiceName) {
       for (var i = 0; i < voices.length; i++) {
@@ -135,14 +136,18 @@
       }
     }
     if (!restored) {
-      var zhIdx = -1, yaoIdx = -1;
+      var zhIdx = -1, yaoIdx = -1, smartIdx = -1;
+      var smartPat = pickSmartDefault();
       for (var j = 0; j < voices.length; j++) {
         if (/^zh/i.test(voices[j].lang)) {
           if (zhIdx === -1) zhIdx = j;
-          if (/yaoyao/i.test(voices[j].name)) { yaoIdx = j; break; }
+          if (/yaoyao/i.test(voices[j].name)) { yaoIdx = j; }
+          if (smartPat && smartPat.test(voices[j].name)) { smartIdx = j; break; }
         }
       }
-      if (yaoIdx !== -1) sel.value = String(yaoIdx);
+      // 优先智能默认（Edge 上会选云希男声），其次瑶瑶，其次第一个中文
+      if (smartIdx !== -1) sel.value = String(smartIdx);
+      else if (yaoIdx !== -1) sel.value = String(yaoIdx);
       else if (zhIdx !== -1) sel.value = String(zhIdx);
     }
     if (!restored && !sel.value && voices.length) sel.value = "0";
@@ -414,6 +419,109 @@
 
   // 离开页面时停止朗读，避免声音残留
   window.addEventListener("beforeunload", function () { synth && synth.cancel(); });
+
+  /* ---------- 智能默认发音人推荐 ----------
+   * 源站（gxezb）通过腾讯云 TTS 后端生成真实音频，所以它的 7 种音色都是真正不同的声音。
+   * yybb 用浏览器 speechSynthesis，在不同浏览器/内核下表现差异很大：
+   *   - Edge: 支持真实在线音色（云希男声、晓晓女声），可完全区分
+   *   - Chrome/桌面浏览器: 通常支持区分
+   *   - 微信/QQ/钉钉内置浏览器、部分 WebView: 会忽略 utterance.voice，把所有中文音色合成同一女声
+   *
+   * 智能默认：根据 UA 自动选一个该浏览器下最可能区分开的发音人。
+   */
+  function pickSmartDefault() {
+    var ua = navigator.userAgent;
+    var isEdge = /Edg\//.test(ua);
+    // Edge 上有真实在线音色，默认用"云希(男声)"—— 与系统默认慧慧女声对比最明显
+    if (isEdge) {
+      return /yunxi/i;
+    }
+    // Windows 本地音色，默认"瑶瑶"是标准女声；如果希望默认男声，可以改成康康
+    // 这里沿用历史行为：默认女声（瑶瑶）
+    return /yaoyao/i;
+  }
+
+  // 在 refreshVoices 里替换原来的"默认瑶瑶"逻辑，改为智能默认
+  // （保留原有 lastVoiceName 恢复优先）
+  // —— 已内联到 refreshVoices 中（见下方）
+
+  /* ---------- 音色诊断 ----------
+   * 播放同一段文本两次，分别用两种候选发音人。如果用户听到是同一个声音，
+   * 说明当前浏览器忽略了 utterance.voice 设置。
+   */
+  function diagnoseVoices() {
+    if (!synth) {
+      setDiag("当前浏览器不支持语音合成。", "fail");
+      return;
+    }
+    var zhVoices = voices.filter(function (v) { return /^zh/i.test(v.lang); });
+    if (zhVoices.length < 2) {
+      setDiag("系统只提供了 " + zhVoices.length + " 个中文发音人，无法对比。", "warn");
+      return;
+    }
+    // 选两个名字差异最大的中文发音人
+    var a = zhVoices[0];
+    var b = zhVoices.filter(function (v) { return v.name !== a.name; })[0];
+    if (!b) {
+      setDiag("所有中文发音人名字相同，无法对比。", "warn");
+      return;
+    }
+
+    stop();
+    synth.cancel();
+
+    var msg = "正在诊断，请仔细听接下来的两段朗读是否音色不同（一段用「" + voiceLabel(a) + "」，一段用「" + voiceLabel(b) + "」）。";
+    setDiag(msg + " …", "running");
+
+    var step = 0;
+    var text = "这是一段测试文字，用于对比两个发音人的音色差异。";
+
+    function playStep(i) {
+      var u = new SpeechSynthesisUtterance(text);
+      u.voice = i;
+      u.lang = i.lang;
+      u.rate = 1.0;
+      u.pitch = 1.0;
+      u.volume = 1.0;
+      u.onend = function () {
+        if (step === 0) {
+          step = 1;
+          playStep(b);
+        } else {
+          // 两段都播完，等待 1.5 秒后给结论（避免用户还没听完就出结论）
+          setTimeout(function () {
+            // 判断：如果两个发音人的 name/lang/localService 完全相同，几乎肯定被合并
+            var sameFingerprint = (a.name === b.name) && (a.lang === b.lang) && (a.localService === b.localService);
+            if (sameFingerprint) {
+              setDiag("两个发音人元数据完全相同，很可能被浏览器合并为同一声音。<b>请切换到 Microsoft Edge</b> 打开本页，可获得真正的多音色支持。", "fail");
+            } else {
+              // 元数据不同 —— 在正常浏览器里应该能区分
+              setDiag("两段朗读分别用了「" + voiceLabel(a) + "」和「" + voiceLabel(b) + "」。如果你听到<b>两种不同的声音</b>，说明音色选择正常，可以关闭本页提示；如果<b>听起来是同一个声音</b>，说明当前浏览器忽略了发音人设置，请切换到 <b>Microsoft Edge</b> 或 Chrome/Firefox 桌面版。", "ok");
+            }
+          }, 1500);
+        }
+      };
+      u.onerror = function (e) {
+        if (e.error === "interrupted" || e.error === "canceled") return;
+        setDiag("诊断朗读出错：" + e.error, "fail");
+      };
+      synth.speak(u);
+    }
+    playStep(a);
+  }
+
+  function setDiag(html, level) {
+    var el = $("diagNotice");
+    var r = $("diagResult");
+    if (!el || !r) return;
+    r.innerHTML = html;
+    el.hidden = false;
+    el.className = "notice" + (level === "fail" ? " fail" : (level === "warn" ? " warn" : ""));
+  }
+
+  // 诊断按钮
+  if ($("btnDiag")) $("btnDiag").addEventListener("click", diagnoseVoices);
+  if ($("btnDiagTip")) $("btnDiagTip").addEventListener("click", diagnoseVoices);
 
   charCount.textContent = textEl.value.length;
 })();
