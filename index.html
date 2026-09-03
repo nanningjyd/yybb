@@ -6,7 +6,7 @@
   <meta name="description" content="yybb - 免登录的网页语音播报工具：粘贴文字，点击即读。纯浏览器本地合成，无需后端。" />
   <title>yybb · 网页语音播报</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🔊</text></svg>" />
-  <link rel="stylesheet" href="style.css?v=1.2" />
+  <link rel="stylesheet" href="style.css?v=1.5" />
 </head>
 <body>
   <header class="topbar">
@@ -15,6 +15,10 @@
   </header>
 
   <main class="container">
+    <div class="notice" id="engineNotice" hidden>
+      ⚠ 检测到当前浏览器可能<b>忽略发音人选择</b>：多个音色听起来是同一个声音，这是该浏览器内核的已知限制，网页无法绕过。
+      建议用 <b>Edge 浏览器</b>打开本页，可正常使用“云希（男声）”等真实男声；或把下方“音调”调低到 0.5，让声音偏低沉。
+    </div>
     <section class="card editor-card">
       <div class="editor-head">
         <label for="text">要播报的文字</label>
@@ -75,6 +79,6 @@
     <a href="https://github.com/nanningjyd/yybb" target="_blank" rel="noopener">GitHub 仓库</a>
   </footer>
 
-  <script src="app.js?v=1.2"></script>
+  <script src="app.js?v=1.6"></script>
 </body>
 </html>

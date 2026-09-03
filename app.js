@@ -16,9 +16,11 @@
 
   var synth = window.speechSynthesis;
   var voices = [];
+  var lastVoiceName = "";  // 按名称记住所选音色，音色列表异步分批到达时也能恢复
   var sentences = [];      // 切分后的句子数组
   var current = -1;        // 正在朗读的句子下标
   var state = "idle";      // idle | playing | paused
+  var previewing = false;  // 是否正在试听
 
   var tipEl = $("tip");
   var tipTimer = null;
@@ -117,24 +119,44 @@
       return score(a) - score(b);
     });
 
-    var selected = voiceEl.value;
-    voiceEl.innerHTML = "";
+    var sel = voiceEl;
+    sel.innerHTML = "";
     voices.forEach(function (v, i) {
       var opt = document.createElement("option");
       opt.value = String(i);
       opt.textContent = voiceLabel(v);
-      voiceEl.appendChild(opt);
+      sel.appendChild(opt);
     });
-    // 尽量恢复之前的选择，否则默认选中第一个中文音色
-    if (selected !== "") {
-      voiceEl.value = selected;
-    }
-    if (!voiceEl.value) {
+    // 恢复用户上次选的音色（按名称）；没有历史选择时，默认选中“瑶瑶（女声）”，其次第一个中文音色
+    var restored = "";
+    if (lastVoiceName) {
       for (var i = 0; i < voices.length; i++) {
-        if (/^zh/i.test(voices[i].lang)) { voiceEl.value = String(i); break; }
+        if (voices[i].name === lastVoiceName) { sel.value = String(i); restored = sel.value; break; }
       }
     }
-    if (!voiceEl.value && voices.length) voiceEl.value = "0";
+    if (!restored) {
+      var zhIdx = -1, yaoIdx = -1;
+      for (var j = 0; j < voices.length; j++) {
+        if (/^zh/i.test(voices[j].lang)) {
+          if (zhIdx === -1) zhIdx = j;
+          if (/yaoyao/i.test(voices[j].name)) { yaoIdx = j; break; }
+        }
+      }
+      if (yaoIdx !== -1) sel.value = String(yaoIdx);
+      else if (zhIdx !== -1) sel.value = String(zhIdx);
+    }
+    if (!restored && !sel.value && voices.length) sel.value = "0";
+
+    // 非Edge的Chromium内核在Windows上有"忽略发音人选择"的已知缺陷，给出提示
+    var engineNotice = $("engineNotice");
+    if (engineNotice) {
+      var isEdge = /Edg\//.test(navigator.userAgent);
+      var isWin = /Windows/.test(navigator.userAgent);
+      var zhLocalCount = voices.filter(function (v) {
+        return /^zh/i.test(v.lang) && v.localService;
+      }).length;
+      engineNotice.hidden = !(isWin && !isEdge && zhLocalCount > 1);
+    }
   }
 
   function getVoice() {
@@ -144,15 +166,38 @@
 
   if (synth) {
     refreshVoices();
-    // Chrome 首次打开时音色列表异步加载
+    // Chrome 首次打开时音色列表异步加载；部分内核还会分批到达，延迟再刷新几次
     synth.onvoiceschanged = refreshVoices;
+    [400, 1200, 2500].forEach(function (t) { setTimeout(refreshVoices, t); });
   }
   $("btnRefreshVoices").addEventListener("click", refreshVoices);
 
-  // 试听当前选中的发音人
+  // 用户手动换音色时记住名称，供刷新列表后恢复
+  voiceEl.addEventListener("change", function () {
+    var v = getVoice();
+    if (v) lastVoiceName = v.name;
+  });
+
+  // 试听当前选中的发音人；试听中再点一次可暂停/继续
   $("btnPreview").addEventListener("click", function () {
     if (!synth) { alert("当前浏览器不支持语音合成，请使用 Edge / Chrome / Safari。"); return; }
+
+    // 试听中 → 暂停
+    if (previewing && synth.speaking && !synth.paused) {
+      synth.pause();
+      setPreviewBtn("▶ 继续");
+      return;
+    }
+    // 已暂停 → 继续
+    if (previewing && synth.paused) {
+      synth.resume();
+      setPreviewBtn("⏸ 暂停");
+      return;
+    }
+
+    // 全新试听
     stop();
+    previewing = true;
     var v = getVoice();
     var u = new SpeechSynthesisUtterance("你好，我是" + (v ? voiceLabel(v) : "默认") + "，很高兴为你播报。");
     if (v) {
@@ -162,7 +207,17 @@
     u.rate = parseFloat(rateEl.value);
     u.pitch = parseFloat(pitchEl.value);
     u.volume = parseFloat(volumeEl.value);
+    u.onend = function () {
+      previewing = false;
+      setPreviewBtn("▶ 试听");
+    };
+    u.onerror = function (e) {
+      if (e.error === "interrupted" || e.error === "canceled") return;
+      previewing = false;
+      setPreviewBtn("▶ 试听");
+    };
     synth.speak(u);
+    setPreviewBtn("⏸ 暂停");
   });
 
   /* ---------- 文本切分 ---------- */
@@ -277,6 +332,10 @@
     if (!sentences.length) return;
     renderScript();
 
+    // 结束可能的试听状态
+    previewing = false;
+    setPreviewBtn("▶ 试听");
+
     synth.cancel();
     state = "playing";
     setButtons();
@@ -286,6 +345,8 @@
   function stop() {
     state = "idle";
     current = -1;
+    previewing = false;
+    setPreviewBtn("▶ 试听");
     synth.cancel();
     setButtons();
     markSentence();
@@ -296,6 +357,10 @@
     btnPause.textContent = state === "paused" ? "▶ 继续" : "⏸ 暂停";
     btnPause.disabled = state === "idle";
     btnStop.disabled = state === "idle";
+  }
+
+  function setPreviewBtn(text) {
+    $("btnPreview").textContent = text;
   }
 
   /* ---------- 事件绑定 ---------- */
