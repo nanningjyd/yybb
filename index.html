@@ -6,7 +6,7 @@
   <meta name="description" content="yybb - 免登录的网页语音播报工具：粘贴文字，点击即读。纯浏览器本地合成，无需后端。" />
   <title>yybb · 网页语音播报</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🔊</text></svg>" />
-  <link rel="stylesheet" href="style.css?v=1.1" />
+  <link rel="stylesheet" href="style.css?v=1.2" />
 </head>
 <body>
   <header class="topbar">
@@ -33,6 +33,7 @@
           <label for="voice">发音人</label>
           <select id="voice"></select>
         </div>
+        <button id="btnPreview" class="btn ghost small" type="button" title="用当前选中的发音人读一句试听">▶ 试听</button>
         <button id="btnRefreshVoices" class="btn ghost small" type="button" title="浏览器语音列表加载慢时可手动刷新">↻ 刷新音色</button>
       </div>
       <div class="control-row sliders">
@@ -65,7 +66,7 @@
     </section>
 
     <p class="tip" id="tip">
-      提示：发音人列表由操作系统和浏览器提供。Windows 建议 Edge 浏览器（自带“晓晓”等高质量中文音色）；macOS / iOS 内置“婷婷”等中文音色。第一次打开时音色列表可能延迟几秒才加载。
+      提示：发音人列表由操作系统和浏览器提供。Windows 建议用 <b>Edge 浏览器</b>打开，里面有“云希（男声）”“晓晓（女声）”等高质量在线音色；macOS / iOS 内置“婷婷”等。若所有音色听起来都是同一个声音，说明当前浏览器/WebView 忽略了发音人选择，请换 Edge 或 Chrome 打开。
     </p>
   </main>
 
@@ -74,6 +75,6 @@
     <a href="https://github.com/nanningjyd/yybb" target="_blank" rel="noopener">GitHub 仓库</a>
   </footer>
 
-  <script src="app.js?v=1.1"></script>
+  <script src="app.js?v=1.2"></script>
 </body>
 </html>

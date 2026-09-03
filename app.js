@@ -149,6 +149,22 @@
   }
   $("btnRefreshVoices").addEventListener("click", refreshVoices);
 
+  // 试听当前选中的发音人
+  $("btnPreview").addEventListener("click", function () {
+    if (!synth) { alert("当前浏览器不支持语音合成，请使用 Edge / Chrome / Safari。"); return; }
+    stop();
+    var v = getVoice();
+    var u = new SpeechSynthesisUtterance("你好，我是" + (v ? voiceLabel(v) : "默认") + "，很高兴为你播报。");
+    if (v) {
+      u.voice = v;
+      u.lang = v.lang;
+    }
+    u.rate = parseFloat(rateEl.value);
+    u.pitch = parseFloat(pitchEl.value);
+    u.volume = parseFloat(volumeEl.value);
+    synth.speak(u);
+  });
+
   /* ---------- 文本切分 ---------- */
 
   // 按标点切分并保留标点。delims 是字符类内容（不含 ^ ）。
@@ -221,7 +237,10 @@
   function speakIndex(i) {
     var u = new SpeechSynthesisUtterance(sentences[i]);
     var v = getVoice();
-    if (v) u.voice = v;
+    if (v) {
+      u.voice = v;
+      u.lang = v.lang; // 部分引擎按语言路由，同时设置更可靠
+    }
     u.rate = parseFloat(rateEl.value);
     u.pitch = parseFloat(pitchEl.value);
     u.volume = parseFloat(volumeEl.value);
