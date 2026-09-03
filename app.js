@@ -1,0 +1,249 @@
+/* yybb - 网页语音播报
+ * 纯浏览器本地合成（Web Speech API），无需登录、无需后端。
+ */
+(function () {
+  "use strict";
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  var textEl = $("text");
+  var voiceEl = $("voice");
+  var rateEl = $("rate"), pitchEl = $("pitch"), volumeEl = $("volume");
+  var rateOut = $("rateOut"), pitchOut = $("pitchOut"), volumeOut = $("volumeOut");
+  var btnPlay = $("btnPlay"), btnPause = $("btnPause"), btnStop = $("btnStop");
+  var scriptCard = $("scriptCard"), scriptEl = $("script"), progressEl = $("progress");
+  var charCount = $("charCount");
+
+  var synth = window.speechSynthesis;
+  var voices = [];
+  var sentences = [];      // 切分后的句子数组
+  var current = -1;        // 正在朗读的句子下标
+  var state = "idle";      // idle | playing | paused
+
+  /* ---------- 音色列表 ---------- */
+
+  function refreshVoices() {
+    voices = synth.getVoices();
+    if (!voices.length) return;
+
+    var preferred = voices.slice().sort(function (a, b) {
+      function score(v) {
+        var s = 0;
+        if (/^zh/i.test(v.lang)) s -= 100;              // 中文优先
+        if (v.localService) s -= 5;                      // 本地音色优先
+        if (/Google|Xiaoxiao|Yaoyao|Kangkang|Ting/i.test(v.name)) s -= 2;
+        return s;
+      }
+      return score(a) - score(b);
+    });
+
+    var selected = voiceEl.value;
+    voiceEl.innerHTML = "";
+    preferred.forEach(function (v, i) {
+      var opt = document.createElement("option");
+      opt.value = String(i);
+      opt.textContent = v.name + "（" + v.lang + (v.localService ? "" : "，在线") + "）";
+      voiceEl.appendChild(opt);
+    });
+    // 尽量恢复之前的选择，否则默认选中第一个中文音色
+    if (selected !== "") {
+      voiceEl.value = selected;
+    }
+    if (!voiceEl.value) {
+      for (var i = 0; i < preferred.length; i++) {
+        if (/^zh/i.test(preferred[i].lang)) { voiceEl.value = String(i); break; }
+      }
+    }
+    if (!voiceEl.value && preferred.length) voiceEl.value = "0";
+  }
+
+  function getVoice() {
+    var i = parseInt(voiceEl.value, 10);
+    return voices[i] || null;
+  }
+
+  if (synth) {
+    refreshVoices();
+    // Chrome 首次打开时音色列表异步加载
+    synth.onvoiceschanged = refreshVoices;
+  }
+  $("btnRefreshVoices").addEventListener("click", refreshVoices);
+
+  /* ---------- 文本切分 ---------- */
+
+  // 按标点切分并保留标点。delims 是字符类内容（不含 ^ ）。
+  function splitKeepDelim(text, delims) {
+    var re = new RegExp("[^" + delims + "]*[" + delims + "]+|[^" + delims + "]+$", "g");
+    return text.match(re) || [];
+  }
+
+  // 按句末标点/换行切分；单句超过 MAX_LEN 再按逗号等次级标点细分，
+  // 避免个别浏览器对超长朗读文本静默截断。
+  var MAX_LEN = 110;
+
+  function splitSentences(text) {
+    var rough = splitKeepDelim(text, "。！？!?；;\\n\\r");
+    var result = [];
+    rough.forEach(function (seg) {
+      seg = seg.trim();
+      if (!seg) return;
+      if (seg.length <= MAX_LEN) {
+        result.push(seg);
+        return;
+      }
+      // 超长句按次级标点继续切
+      var sub = splitKeepDelim(seg, "，,、：:—");
+      var buf = "";
+      sub.forEach(function (piece) {
+        if ((buf + piece).length > MAX_LEN && buf) {
+          result.push(buf.trim());
+          buf = piece;
+        } else {
+          buf += piece;
+        }
+      });
+      if (buf.trim()) result.push(buf.trim());
+    });
+    return result;
+  }
+
+  /* ---------- 播放队列 ---------- */
+
+  function renderScript() {
+    scriptEl.innerHTML = "";
+    sentences.forEach(function (s, i) {
+      var div = document.createElement("div");
+      div.className = "sentence";
+      div.textContent = s;
+      div.addEventListener("click", function () { playFrom(i); });
+      scriptEl.appendChild(div);
+    });
+    scriptCard.hidden = sentences.length === 0;
+    updateProgress();
+  }
+
+  function markSentence() {
+    var nodes = scriptEl.children;
+    for (var i = 0; i < nodes.length; i++) {
+      nodes[i].className = "sentence" +
+        (i === current ? " current" : (current !== -1 && i < current ? " done" : ""));
+    }
+    if (current >= 0 && nodes[current]) {
+      nodes[current].scrollIntoView({ block: "nearest" });
+    }
+    updateProgress();
+  }
+
+  function updateProgress() {
+    progressEl.textContent = (current + 1 > 0 ? current + 1 : 0) + " / " + sentences.length;
+  }
+
+  function speakIndex(i) {
+    var u = new SpeechSynthesisUtterance(sentences[i]);
+    var v = getVoice();
+    if (v) u.voice = v;
+    u.rate = parseFloat(rateEl.value);
+    u.pitch = parseFloat(pitchEl.value);
+    u.volume = parseFloat(volumeEl.value);
+    u.onstart = function () { current = i; markSentence(); };
+    u.onend = function () {
+      if (state !== "playing") return; // 已被停止/替换
+      if (i + 1 < sentences.length) {
+        speakIndex(i + 1);
+      } else {
+        stop();
+      }
+    };
+    u.onerror = function (e) {
+      // 被主动 cancel 时的中断不算错误
+      if (e.error === "interrupted" || e.error === "canceled") return;
+      console.warn("朗读出错：", e.error);
+      stop();
+    };
+    synth.speak(u);
+  }
+
+  function playFrom(i) {
+    if (!synth) { alert("当前浏览器不支持语音合成，请使用 Edge / Chrome / Safari。"); return; }
+    var text = textEl.value.trim();
+    if (!text) { textEl.focus(); return; }
+
+    sentences = splitSentences(text);
+    if (!sentences.length) return;
+    renderScript();
+
+    synth.cancel();
+    state = "playing";
+    setButtons();
+    speakIndex(i);
+  }
+
+  function stop() {
+    state = "idle";
+    current = -1;
+    synth.cancel();
+    setButtons();
+    markSentence();
+  }
+
+  function setButtons() {
+    btnPlay.textContent = state === "playing" ? "↻ 重新播报" : "▶ 开始播报";
+    btnPause.textContent = state === "paused" ? "▶ 继续" : "⏸ 暂停";
+    btnPause.disabled = state === "idle";
+    btnStop.disabled = state === "idle";
+  }
+
+  /* ---------- 事件绑定 ---------- */
+
+  btnPlay.addEventListener("click", function () { playFrom(0); });
+
+  btnPause.addEventListener("click", function () {
+    if (state === "playing") {
+      synth.pause();
+      state = "paused";
+    } else if (state === "paused") {
+      synth.resume();
+      state = "playing";
+    }
+    setButtons();
+  });
+
+  btnStop.addEventListener("click", stop);
+
+  $("btnClear").addEventListener("click", function () {
+    textEl.value = "";
+    charCount.textContent = "0";
+    sentences = [];
+    renderScript();
+    textEl.focus();
+  });
+
+  $("btnPaste").addEventListener("click", function () {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then(function (t) {
+        textEl.value += (textEl.value && textEl.value.slice(-1) !== "\n" ? "\n" : "") + t;
+        charCount.textContent = textEl.value.length;
+        textEl.scrollTop = textEl.scrollHeight;
+      }).catch(function () {
+        textEl.focus();
+      });
+    } else {
+      textEl.focus();
+    }
+  });
+
+  textEl.addEventListener("input", function () {
+    charCount.textContent = textEl.value.length;
+  });
+
+  [[rateEl, rateOut], [pitchEl, pitchOut], [volumeEl, volumeOut]].forEach(function (pair) {
+    pair[0].addEventListener("input", function () {
+      pair[1].textContent = parseFloat(pair[0].value).toFixed(1);
+    });
+  });
+
+  // 离开页面时停止朗读，避免声音残留
+  window.addEventListener("beforeunload", function () { synth && synth.cancel(); });
+
+  charCount.textContent = textEl.value.length;
+})();

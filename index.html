@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="yybb - 免登录的网页语音播报工具：粘贴文字，点击即读。纯浏览器本地合成，无需后端。" />
+  <title>yybb · 网页语音播报</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🔊</text></svg>" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>🔊 yybb</h1>
+    <p class="subtitle">粘贴文字 · 点击即读 · 纯浏览器本地合成，无需登录、无需后端</p>
+  </header>
+
+  <main class="container">
+    <section class="card editor-card">
+      <div class="editor-head">
+        <label for="text">要播报的文字</label>
+        <div class="editor-tools">
+          <button id="btnPaste" class="btn ghost small" type="button" title="读取剪贴板">📋 粘贴</button>
+          <button id="btnClear" class="btn ghost small" type="button">清空</button>
+        </div>
+      </div>
+      <textarea id="text" rows="8" placeholder="把要播报的文字粘贴到这里…&#10;支持长文本，会自动按句切分、逐句朗读。"></textarea>
+      <div class="counter"><span id="charCount">0</span> 字</div>
+    </section>
+
+    <section class="card controls-card">
+      <div class="control-row">
+        <div class="control grow">
+          <label for="voice">发音人</label>
+          <select id="voice"></select>
+        </div>
+        <button id="btnRefreshVoices" class="btn ghost small" type="button" title="浏览器语音列表加载慢时可手动刷新">↻ 刷新音色</button>
+      </div>
+      <div class="control-row sliders">
+        <div class="control">
+          <label for="rate">语速 <output id="rateOut">1.0</output>x</label>
+          <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1" />
+        </div>
+        <div class="control">
+          <label for="pitch">音调 <output id="pitchOut">1.0</output></label>
+          <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1" />
+        </div>
+        <div class="control">
+          <label for="volume">音量 <output id="volumeOut">1.0</output></label>
+          <input type="range" id="volume" min="0" max="1" step="0.05" value="1" />
+        </div>
+      </div>
+      <div class="action-row">
+        <button id="btnPlay" class="btn primary" type="button">▶ 开始播报</button>
+        <button id="btnPause" class="btn" type="button" disabled>⏸ 暂停</button>
+        <button id="btnStop" class="btn" type="button" disabled>⏹ 停止</button>
+      </div>
+    </section>
+
+    <section class="card script-card" id="scriptCard" hidden>
+      <div class="editor-head">
+        <label>朗读进度（点击任意一句可从该句开始播报）</label>
+        <span class="counter"><span id="progress">0 / 0</span> 句</span>
+      </div>
+      <div id="script" class="script"></div>
+    </section>
+
+    <p class="tip" id="tip">
+      提示：发音人列表由操作系统和浏览器提供。Windows 建议 Edge 浏览器（自带“晓晓”等高质量中文音色）；macOS / iOS 内置“婷婷”等中文音色。第一次打开时音色列表可能延迟几秒才加载。
+    </p>
+  </main>
+
+  <footer class="footer">
+    <span>yybb — 开源网页语音播报</span>
+    <a href="https://github.com/nanningjyd/yybb" target="_blank" rel="noopener">GitHub 仓库</a>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
