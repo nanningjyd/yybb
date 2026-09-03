@@ -37,6 +37,70 @@
 
   /* ---------- 音色列表 ---------- */
 
+  // 语言代码 → 中文名
+  var LANG_CN = {
+    "zh-CN": "中文（简体）", "zh-HK": "中文（粤语）", "zh-TW": "中文（繁体）", "zh": "中文",
+    "en-US": "英语（美国）", "en-GB": "英语（英国）", "en-AU": "英语（澳大利亚）", "en-IN": "英语（印度）", "en": "英语",
+    "ja-JP": "日语", "ko-KR": "韩语", "fr-FR": "法语", "de-DE": "德语", "es-ES": "西班牙语",
+    "es-MX": "西班牙语（墨西哥）", "pt-BR": "葡萄牙语（巴西）", "it-IT": "意大利语", "ru-RU": "俄语",
+    "ar-SA": "阿拉伯语", "hi-IN": "印地语", "th-TH": "泰语", "vi-VN": "越南语", "yue-CN": "粤语"
+  };
+
+  function langCN(lang) {
+    if (!lang) return "未知语言";
+    if (LANG_CN[lang]) return LANG_CN[lang];
+    var prefix = lang.split("-")[0].toLowerCase();
+    if (LANG_CN[prefix]) return LANG_CN[prefix];
+    return lang;
+  }
+
+  // 常见发音人的中文名与性别（按英文名/拼音匹配）
+  var VOICE_CN = [
+    [/kangkang/i, "康康", "男声"],
+    [/yaoyao/i, "瑶瑶", "女声"],
+    [/huihui/i, "慧慧", "女声"],
+    [/xiaoxiao/i, "晓晓", "女声"],
+    [/xiaohan/i, "晓涵", "女声"],
+    [/xiaomo/i, "晓墨", "女声"],
+    [/xiaoqiu/i, "晓秋", "女声"],
+    [/xiaorui/i, "晓睿", "女声"],
+    [/xiaoshuang/i, "晓双", "童声"],
+    [/xiaoxuan/i, "晓萱", "女声"],
+    [/xiaoyan/i, "晓颜", "女声"],
+    [/xiaoyi/i, "晓伊", "女声"],
+    [/xiaoyou/i, "晓悠", "童声"],
+    [/xiaozhen/i, "晓甄", "女声"],
+    [/yunxi/i, "云希", "男声"],
+    [/yunyang/i, "云扬", "男声"],
+    [/yunjian/i, "云健", "男声"],
+    [/yunfeng/i, "云枫", "男声"],
+    [/yunhao/i, "云皓", "男声"],
+    [/yunye/i, "云野", "男声"],
+    [/yunze/i, "云泽", "男声"],
+    [/ting[- ]?ting/i, "婷婷", "女声"],
+    [/mei[- ]?jia/i, "美佳", "女声"],
+    [/sin[- ]?ji/i, "善怡", "女声"],
+    [/sin[- ]?j/i, "善怡", "女声"],
+    [/(普通话|mandarin)/i, "Google 普通话", "女声"],
+    [/(香港话|cantonese)/i, "Google 粤语", "女声"]
+  ];
+
+  function voiceCN(voice) {
+    for (var i = 0; i < VOICE_CN.length; i++) {
+      if (VOICE_CN[i][0].test(voice.name)) return VOICE_CN[i];
+    }
+    return null;
+  }
+
+  // 下拉框显示文本：已知音色用「中文名（性别）· 语言」，未知音色用「语言中文名 · 原名」
+  function voiceLabel(v) {
+    var cn = voiceCN(v);
+    var lang = langCN(v.lang);
+    var online = v.localService ? "" : " · 在线";
+    if (cn) return cn[1] + "（" + cn[2] + "）· " + lang + online;
+    return lang + " · " + v.name + online;
+  }
+
   function refreshVoices() {
     voices = synth.getVoices();
     if (!voices.length) return;
@@ -58,7 +122,7 @@
     voices.forEach(function (v, i) {
       var opt = document.createElement("option");
       opt.value = String(i);
-      opt.textContent = v.name + "（" + v.lang + (v.localService ? "" : "，在线") + "）";
+      opt.textContent = voiceLabel(v);
       voiceEl.appendChild(opt);
     });
     // 尽量恢复之前的选择，否则默认选中第一个中文音色
@@ -187,7 +251,7 @@
     // 防呆：文本是中文但发音人不支持中文时，提前提醒（此时浏览器往往无声播放）
     var v0 = getVoice();
     if (v0 && /[\u4e00-\u9fff]/.test(text) && !/^zh/i.test(v0.lang)) {
-      warn("当前发音人「" + v0.name + "」不支持中文（" + v0.lang + "），请在“发音人”中选择语言标注为 zh 的音色。");
+      warn("当前发音人「" + voiceLabel(v0) + "」不支持中文，请在“发音人”中选择标注为中文（简体）的音色。");
     }
 
     sentences = splitSentences(text);
