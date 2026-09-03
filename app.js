@@ -20,13 +20,29 @@
   var current = -1;        // 正在朗读的句子下标
   var state = "idle";      // idle | playing | paused
 
+  var tipEl = $("tip");
+  var tipTimer = null;
+  var tipDefault = tipEl.textContent;
+
+  // 非阻塞提示：8 秒后自动恢复
+  function warn(msg) {
+    tipEl.textContent = "⚠ " + msg;
+    tipEl.style.color = "#d9534f";
+    if (tipTimer) clearTimeout(tipTimer);
+    tipTimer = setTimeout(function () {
+      tipEl.textContent = tipDefault;
+      tipEl.style.color = "";
+    }, 8000);
+  }
+
   /* ---------- 音色列表 ---------- */
 
   function refreshVoices() {
     voices = synth.getVoices();
     if (!voices.length) return;
 
-    var preferred = voices.slice().sort(function (a, b) {
+    // 就地排序：下拉框的序号必须和 getVoice() 取的数组保持同一个顺序
+    voices.sort(function (a, b) {
       function score(v) {
         var s = 0;
         if (/^zh/i.test(v.lang)) s -= 100;              // 中文优先
@@ -39,7 +55,7 @@
 
     var selected = voiceEl.value;
     voiceEl.innerHTML = "";
-    preferred.forEach(function (v, i) {
+    voices.forEach(function (v, i) {
       var opt = document.createElement("option");
       opt.value = String(i);
       opt.textContent = v.name + "（" + v.lang + (v.localService ? "" : "，在线") + "）";
@@ -50,11 +66,11 @@
       voiceEl.value = selected;
     }
     if (!voiceEl.value) {
-      for (var i = 0; i < preferred.length; i++) {
-        if (/^zh/i.test(preferred[i].lang)) { voiceEl.value = String(i); break; }
+      for (var i = 0; i < voices.length; i++) {
+        if (/^zh/i.test(voices[i].lang)) { voiceEl.value = String(i); break; }
       }
     }
-    if (!voiceEl.value && preferred.length) voiceEl.value = "0";
+    if (!voiceEl.value && voices.length) voiceEl.value = "0";
   }
 
   function getVoice() {
@@ -167,6 +183,12 @@
     if (!synth) { alert("当前浏览器不支持语音合成，请使用 Edge / Chrome / Safari。"); return; }
     var text = textEl.value.trim();
     if (!text) { textEl.focus(); return; }
+
+    // 防呆：文本是中文但发音人不支持中文时，提前提醒（此时浏览器往往无声播放）
+    var v0 = getVoice();
+    if (v0 && /[\u4e00-\u9fff]/.test(text) && !/^zh/i.test(v0.lang)) {
+      warn("当前发音人「" + v0.name + "」不支持中文（" + v0.lang + "），请在“发音人”中选择语言标注为 zh 的音色。");
+    }
 
     sentences = splitSentences(text);
     if (!sentences.length) return;
