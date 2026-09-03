@@ -6,7 +6,7 @@
   <meta name="description" content="yybb - 免登录的网页语音播报工具：粘贴文字，点击即读。纯浏览器本地合成，无需后端。" />
   <title>yybb · 网页语音播报</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🔊</text></svg>" />
-  <link rel="stylesheet" href="style.css?v=1.7" />
+  <link rel="stylesheet" href="style.css?v=1.8" />
 </head>
 <body>
   <header class="topbar">
@@ -17,7 +17,7 @@
   <main class="container">
     <div class="notice" id="engineNotice" hidden>
       ⚠ 检测到当前浏览器可能<b>忽略发音人选择</b>：多个音色听起来是同一个声音，这是该浏览器内核的已知限制，网页无法绕过。
-      <b>推荐做法</b>：用 <b>Microsoft Edge</b> 打开本页，可正常使用“云希（男声）”“晓晓（女声）”等高质量在线音色；<b>次选</b>：用 Chrome/Firefox 桌面版；<b>规避</b>：微信/QQ/钉钉内置浏览器、部分 WebView 内核会把所有中文音色合并成同一女声。
+      <b>推荐做法</b>：用 <b>Microsoft Edge</b> 打开本页，可正常使用"云希（男声）"等真实男声；<b>次选</b>：用 Chrome/Firefox 桌面版；<b>规避</b>：微信/QQ/钉钉内置浏览器、部分 WebView 内核会把所有中文音色合并成同一女声。
     </div>
     <div class="notice" id="diagNotice" hidden>
       🧪 <b>音色诊断结果：</b><span id="diagResult"></span>
@@ -43,6 +43,7 @@
         <button id="btnPreview" class="btn ghost small" type="button" title="用当前选中的发音人读一句试听">▶ 试听</button>
         <button id="btnRefreshVoices" class="btn ghost small" type="button" title="浏览器语音列表加载慢时可手动刷新">↻ 刷新音色</button>
         <button id="btnDiag" class="btn ghost small" type="button" title="诊断当前浏览器是否能区分不同音色">🧪 诊断音色</button>
+        <button id="btnSwitchBackend" class="btn primary small" type="button" title="切换到 TTS 后端（需要运行 backend.py）">🔌 切换为 TTS 后端</button>
       </div>
       <div class="control-row sliders">
         <div class="control">
@@ -74,7 +75,7 @@
     </section>
 
     <p class="tip" id="tip">
-      提示：发音人列表由操作系统和浏览器提供。Windows 建议用 <b>Edge 浏览器</b>打开，里面有“云希（男声）”“晓晓（女声）”等高质量在线音色；macOS / iOS 内置“婷婷”等。若所有音色听起来都是同一个声音，说明当前浏览器/WebView 忽略了发音人选择，请换 Edge 或 Chrome 打开。<button id="btnDiagTip" class="btn ghost small" type="button">🧪 一键诊断音色</button>
+      提示：发音人列表由操作系统和浏览器提供。Windows 建议用 <b>Edge 浏览器</b>打开，里面有"云希（男声）""晓晓（女声）"等高质量在线音色；macOS / iOS 内置"婷婷"等。若所有音色听起来都是同一个声音，说明当前浏览器/WebView 忽略了发音人选择，请换 Edge 或 Chrome 打开。<button id="btnDiagTip" class="btn ghost small" type="button">🧪 一键诊断音色</button>
     </p>
   </main>
 
@@ -83,6 +84,6 @@
     <a href="https://github.com/nanningjyd/yybb" target="_blank" rel="noopener">GitHub 仓库</a>
   </footer>
 
-  <script src="app.js?v=1.7"></script>
+  <script src="app.js?v=1.8"></script>
 </body>
 </html>

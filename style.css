@@ -1,3 +1,6 @@
+/* yybb - 网页语音播报样式
+ * v1.8 新增：TTS 后端切换按钮样式
+ */
 :root {
   --bg: #f4f6fb;
   --card: #ffffff;
