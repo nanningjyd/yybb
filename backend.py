@@ -19,12 +19,12 @@ import edge_tts
 # 中文音色映射（对应源站 7 种音色）
 VOICE_MAP = {
     0: "zh-CN-XiaoxiaoNeural",  # 亲和女声
-    1: "zh-CN-YunxiNeural",    # 亲和男声
-    2: "zh-CN-YunyangNeural",  # 成熟男声
-    3: "zh-CN-XiaoyiNeural",   # 活力男声
-    4: "zh-CN-YunjianNeural",  # 温暖女声
-    5: "zh-CN-YunxiaNeural",   # 情感女声
-    6: "zh-CN-liaoning-XiaobeiNeural",  # 情感男声（方言）
+    1: "zh-CN-YunyangNeural",  # 亲和男声
+    2: "zh-CN-XiaoyiNeural",   # 成熟男声
+    3: "zh-CN-YunjianNeural",  # 活力男声
+    4: "zh-CN-YunxiaNeural",   # 温暖女声
+    5: "zh-CN-liaoning-XiaobeiNeural",  # 情感女声（方言）
+    6: "zh-CN-shaanxi-XiaoniNeural",    # 情感男声（方言）
 }
 
 VOICE_LABELS = [
@@ -33,7 +33,7 @@ VOICE_LABELS = [
     "成熟男声",
     "活力男声",
     "温暖女声",
-    "情感女声",
+    "情感女声（方言）",
     "情感男声（方言）",
 ]
 
