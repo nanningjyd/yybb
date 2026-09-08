@@ -47,8 +47,27 @@ body {
 
 .topbar h1 {
   margin: 0;
-  font-size: 2rem;
+  font-size: 6rem;
   letter-spacing: 0.02em;
+  outline: none;
+  border-bottom: 2px dashed transparent;
+  transition: border-color 0.2s;
+  line-height: 1.2;
+  min-height: 1.2em;
+}
+
+.topbar h1:focus {
+  border-bottom-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.clock {
+  margin-top: 12px;
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
 }
 
 .subtitle {

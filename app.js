@@ -743,6 +743,43 @@
   if (btnDiag) btnDiag.addEventListener("click", diagnoseVoices);
   if (btnDiagTip) btnDiagTip.addEventListener("click", diagnoseVoices);
 
+
+  // 北京时间显示
+  var clockEl = document.getElementById("clock");
+  if (clockEl) {
+    function updateClock() {
+      var now = new Date();
+      // 转换为北京时间 (UTC+8)
+      var beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+      var h = beijingTime.getUTCHours();
+      var m = beijingTime.getUTCMinutes();
+      var s = beijingTime.getUTCSeconds();
+      var timeStr = h.toString().padStart(2, '0') + ':' + 
+                   m.toString().padStart(2, '0') + ':' + 
+                   s.toString().padStart(2, '0');
+      clockEl.textContent = '🕐 ' + timeStr;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  }
+
+  // 标题编辑保存
+  var siteTitle = document.getElementById("siteTitle");
+  if (siteTitle) {
+    // 从localStorage加载标题
+    var savedTitle = localStorage.getItem("yybb_title");
+    if (savedTitle) {
+      siteTitle.innerHTML = savedTitle;
+    }
+    // 监听编辑事件
+    siteTitle.addEventListener("blur", function() {
+      localStorage.setItem("yybb_title", siteTitle.innerHTML);
+    });
+    siteTitle.addEventListener("input", function() {
+      localStorage.setItem("yybb_title", siteTitle.innerHTML);
+    });
+  }
+
   /* ---------- 初始化 ---------- */
   if (synth) {
     refreshVoices();
