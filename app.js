@@ -358,28 +358,49 @@
     synth.speak(u);
   }
 
-  /* ---------- 渲染脚本 ---------- */
+  /* ---------- 渲染脚本（显示原文，高亮当前句）---------- */
+  function escapeHtml(text) {
+    var div = document.createElement("div");
+    div.appendChild(document.createTextNode(text));
+    return div.innerHTML;
+  }
+
   function renderScript() {
     scriptEl.innerHTML = "";
+    var originalText = textEl.value;
+    var html = "";
+    var lastPos = 0;
+
     sentences.forEach(function (s, i) {
-      var div = document.createElement("div");
-      div.className = "sentence";
-      div.textContent = s;
-      div.addEventListener("click", function () { playFrom(i); });
-      scriptEl.appendChild(div);
+      // 在原文中找到这个句子的位置
+      var idx = originalText.indexOf(s, lastPos);
+      if (idx === -1) idx = lastPos;
+
+      // 添加句子前的文本
+      if (idx > lastPos) {
+        html += escapeHtml(originalText.substring(lastPos, idx));
+      }
+      // 添加带 span 的句子
+      html += '<span class="sentence" data-idx="' + i + '">' + escapeHtml(s) + "</span>";
+      lastPos = idx + s.length;
     });
+    // 添加最后剩余的文本
+    html += escapeHtml(originalText.substring(lastPos));
+
+    scriptEl.innerHTML = html;
     scriptCard.hidden = sentences.length === 0;
     updateProgress();
   }
 
   function markSentence() {
-    var nodes = scriptEl.children;
-    for (var i = 0; i < nodes.length; i++) {
-      nodes[i].className = "sentence" +
+    var spans = scriptEl.querySelectorAll(".sentence");
+    spans.forEach(function (span, i) {
+      span.className = "sentence" +
         (i === current ? " current" : (current !== -1 && i < current ? " done" : ""));
-    }
-    if (current >= 0 && nodes[current]) {
-      nodes[current].scrollIntoView({ block: "nearest" });
+    });
+    // 滚动到当前句
+    if (current >= 0 && spans[current]) {
+      spans[current].scrollIntoView({ block: "nearest" });
     }
     updateProgress();
   }

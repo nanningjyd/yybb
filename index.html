@@ -6,7 +6,7 @@
   <meta name="description" content="yybb - 免登录的网页语音播报工具：粘贴文字，点击即读。纯浏览器本地合成，无需后端。" />
   <title>yybb · 网页语音播报</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🔊</text></svg>" />
-  <link rel="stylesheet" href="style.css?v=1.13" />
+  <link rel="stylesheet" href="style.css?v=1.14" />
 </head>
 <body>
   <header class="topbar">
@@ -22,6 +22,15 @@
     <div class="notice" id="diagNotice" hidden>
       🧪 <b>音色诊断结果：</b><span id="diagResult"></span>
     </div>
+
+    <section class="card script-card" id="scriptCard" hidden>
+      <div class="editor-head">
+        <label>朗读进度（点击任意处可从该处开始播报）</label>
+        <span class="counter"><span id="progress">0 / 0</span> 句</span>
+      </div>
+      <div id="script" class="script"></div>
+    </section>
+
     <section class="card editor-card">
       <div class="editor-head">
         <label for="text">要播报的文字</label>
@@ -84,6 +93,6 @@
     <a href="https://github.com/nanningjyd/yybb" target="_blank" rel="noopener">GitHub 仓库</a>
   </footer>
 
-  <script src="app.js?v=1.13"></script>
+  <script src="app.js?v=1.14"></script>
 </body>
 </html>

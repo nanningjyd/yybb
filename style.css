@@ -183,30 +183,39 @@ output { color: var(--brand); font-weight: 600; }
 .script-card .counter { margin: 0; }
 
 .script {
-  max-height: 320px;
+  min-height: 120px;
+  max-height: 400px;
   overflow-y: auto;
-  padding: 4px 2px;
+  padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--bg);
+  font-size: 1rem;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .sentence {
-  padding: 8px 12px;
-  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s;
+  border-radius: 3px;
+  padding: 2px 0;
+  transition: color 0.2s, background 0.2s;
 }
 
-.sentence:hover { background: var(--brand-soft); }
+.sentence:hover {
+  background: var(--brand-soft);
+}
 
 .sentence.current {
-  background: var(--brand-soft);
   color: var(--brand);
   font-weight: 600;
+  background: var(--brand-soft);
 }
 
-.sentence.done { color: var(--ink-soft); }
+.sentence.done {
+  color: var(--ink-soft);
+}
 
 .tip {
   color: var(--ink-soft);
