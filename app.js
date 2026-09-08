@@ -85,7 +85,6 @@
     [/xiaoyi/i, "晓伊", "女声"],
     [/xiaoyou/i, "晓悠", "童声"],
     [/xiaozhen/i, "晓甄", "女声"],
-    [/yunxi/i, "云希", "男声"],
     [/yunyang/i, "云扬", "男声"],
     [/yunjian/i, "云健", "男声"],
     [/yunfeng/i, "云枫", "男声"],
@@ -245,7 +244,7 @@
     var ua = navigator.userAgent;
     var isEdge = /Edg\//.test(ua);
     if (isEdge) {
-      return /yunxi/i;  // Edge 默认云希男声
+      return /xiaoxiao/i;  // Edge 默认晓晓女声
     }
     return /yaoyao/i;  // 其他浏览器默认瑶瑶
   }
