@@ -178,7 +178,7 @@
         var s = 0;
         if (/^zh/i.test(v.lang)) s -= 100;
         if (v.localService) s -= 5;
-        if (/Google|Xiaoxiao|Yaoyao|Kangkang|Ting/i.test(v.name)) s -= 2;
+        if (/Google|Xiaoxiao|Yaoyao|Ting/i.test(v.name)) s -= 2;
         return s;
       }
       return score(a) - score(b);
