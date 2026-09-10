@@ -6,7 +6,7 @@
   <meta name="description" content="yybb - 免登录的网页语音播报工具：粘贴文字，点击即读。纯浏览器本地合成，无需后端。" />
   <title>yybb · 网页语音播报</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🔊</text></svg>" />
-  <link rel="stylesheet" href="style.css?v=1.16" />
+  <link rel="stylesheet" href="style.css?v=1.17" />
 </head>
 <body>
   <header class="topbar">
@@ -74,11 +74,12 @@
         <button id="btnPause" class="btn" type="button" disabled>⏸ 暂停</button>
         <button id="btnStop" class="btn" type="button" disabled>⏹ 停止</button>
       </div>
+      <div class="tip" id="tip"></div>
     </section>
 
     <section class="card editor-card">
-      提示：发音人列表由操作系统和浏览器提供。Windows 建议用 <b>Edge 浏览器</b>打开，里面有"晓晓（女声）""婷婷（女声）"等高质量在线音色；macOS / iOS 内置"婷婷"等。若所有音色听起来都是同一个声音，说明当前浏览器/WebView 忽略了发音人选择，请换 Edge 或 Chrome 打开。<button id="btnDiagTip" class="btn ghost small" type="button">🧪 一键诊断音色</button>
-    </p>
+      <p class="tip">提示：发音人列表由操作系统和浏览器提供。Windows 建议用 <b>Edge 浏览器</b>打开，里面有"晓晓（女声）""婷婷（女声）"等高质量在线音色；macOS / iOS 内置"婷婷"等。若所有音色听起来都是同一个声音，说明当前浏览器/WebView 忽略了发音人选择，请换 Edge 或 Chrome 打开。<button id="btnDiagTip" class="btn ghost small" type="button">🧪 一键诊断音色</button></p>
+    </section>
   </main>
 
   <footer class="footer">
@@ -86,6 +87,6 @@
     <a href="https://github.com/nanningjyd/yybb" target="_blank" rel="noopener">GitHub 仓库</a>
   </footer>
 
-  <script src="app.js?v=1.16"></script>
+  <script src="app.js?v=1.17"></script>
 </body>
 </html>

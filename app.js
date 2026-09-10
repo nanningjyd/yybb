@@ -39,10 +39,15 @@
 
   var tipEl = $("tip");
   var tipTimer = null;
-  var tipDefault = tipEl.textContent;
+  var tipDefault = tipEl ? tipEl.textContent : "";
 
   /* ---------- 非阻塞提示 ---------- */
   function warn(msg) {
+    if (!tipEl) {
+      // 页面上没有提示区域时退回到控制台，避免脚本因空引用中断
+      console.warn("[yybb] " + msg);
+      return;
+    }
     tipEl.textContent = "⚠ " + msg;
     tipEl.style.color = "#d9534f";
     if (tipTimer) clearTimeout(tipTimer);
@@ -424,7 +429,7 @@
     if (useTtsBackend) {
       // TTS 后端模式
       ttsQueue = sentences.slice(i);
-      ttsSpeaking = true;
+      ttsPlaying = true;
       state = "playing";
       setButtons();
       ttsSpeakNext();
@@ -448,7 +453,7 @@
     state = "idle";
     current = -1;
     previewing = false;
-    ttsSpeaking = false;
+    ttsPlaying = false;
     ttsQueue = [];
     setPreviewBtn("▶ 试听");
     if (synth) synth.cancel();
