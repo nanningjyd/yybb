@@ -19,7 +19,6 @@
   var btnRefreshVoices = $("btnRefreshVoices");
   var btnDiag = $("btnDiag");
   var btnDiagTip = $("btnDiagTip");
-  var engineNotice = $("engineNotice");
   var diagNotice = $("diagNotice");
   var diagResult = $("diagResult");
 
@@ -202,7 +201,6 @@
       sel.appendChild(opt);
     });
     restoreVoiceSelection(sel, items, isBackend);
-    updateEngineNotice(isBackend);
   }
 
   function restoreVoiceSelection(sel, items, isBackend) {
@@ -221,22 +219,6 @@
       }
     }
     if (!restored && !sel.value && items.length) sel.value = "0";
-  }
-
-  function updateEngineNotice(isBackend) {
-    if (!engineNotice) return;
-    // 后端模式下，不显示浏览器限制提示
-    if (isBackend) {
-      engineNotice.hidden = true;
-      return;
-    }
-    // 浏览器模式下的限制提示
-    var isEdge = /Edg\//.test(navigator.userAgent);
-    var isWin = /Windows/.test(navigator.userAgent);
-    var zhLocalCount = voices.filter(function (v) {
-      return /^zh/i.test(v.lang) && v.localService;
-    }).length;
-    engineNotice.hidden = !(isWin && !isEdge && zhLocalCount > 1);
   }
 
   /* ---------- 智能默认发音人 ---------- */
@@ -582,7 +564,6 @@
           btnSwitchBackend.className = "btn ghost small";
           voiceEl.disabled = false;
           refreshVoices();
-          updateEngineNotice(true);
           warn("已切换到 TTS 后端（" + ttsBackendUrl + "），音色由边缘 TTS 生成");
         } else {
           warn("TTS 后端不可用，已回退到浏览器合成");
